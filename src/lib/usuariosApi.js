@@ -1,8 +1,8 @@
 import { supabase } from './supabase'
-import { supabaseAdmin } from './adminClient'
+import { getAdminClient } from './adminClient'
 
 export const listarUsuarios = async () => {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getAdminClient()
     .from('perfiles')
     .select('*')
     .order('nombre')
@@ -11,7 +11,8 @@ export const listarUsuarios = async () => {
 }
 
 export const crearUsuario = async ({ nombre, email, password, rol, portafolio }) => {
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+  const admin = getAdminClient()
+  const { data: authData, error: authError } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -20,7 +21,7 @@ export const crearUsuario = async ({ nombre, email, password, rol, portafolio })
   if (authError) throw authError
 
   // El trigger handle_new_user() ya creó la fila en perfiles; la actualizamos
-  const { error: profileError } = await supabaseAdmin
+  const { error: profileError } = await admin
     .from('perfiles')
     .upsert({
       id:         authData.user.id,
@@ -36,7 +37,7 @@ export const crearUsuario = async ({ nombre, email, password, rol, portafolio })
 }
 
 export const actualizarUsuario = async (id, campos) => {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getAdminClient()
     .from('perfiles')
     .update({
       nombre:     campos.nombre,
