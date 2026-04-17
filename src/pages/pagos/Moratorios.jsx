@@ -5,12 +5,14 @@ import { getMoratoriosActivos, sincronizarMoratorios, getHistorialMoratorios, co
 import { getContratosArrendamiento, getContratosCredito } from '../../lib/contratosApi'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { useAuthStore } from '../../store/authStore'
+import { usePortafolioStore } from '../../store/portafolioStore'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 
 export default function Moratorios() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { getFiltroPortafolio } = usePortafolioStore()
 
   const [moratorios, setMoratorios]   = useState([])
   const [historial, setHistorial]     = useState([])
@@ -24,6 +26,8 @@ export default function Moratorios() {
   const [motivoCondonar, setMotivoCondonar] = useState('')
   const [condonando, setCondonando]        = useState(false)
 
+  const portafolio = getFiltroPortafolio()
+
   const cargar = async () => {
     setLoading(true)
     try {
@@ -34,15 +38,19 @@ export default function Moratorios() {
       const [m, h, arr, crd] = await Promise.all([
         getMoratoriosActivos(),
         getHistorialMoratorios(),
-        getContratosArrendamiento(),
-        getContratosCredito(),
+        getContratosArrendamiento(portafolio ? { portafolio } : {}),
+        getContratosCredito(portafolio ? { portafolio } : {}),
       ])
 
       // Indexar contratos por id para lookup rápido
       const idx = {}
       ;[...arr, ...crd].forEach(c => { idx[c.id] = c })
       setContratos(idx)
-      setMoratorios(m)
+      // Filter moratorios to only those whose contract is in this portfolio
+      const morFiltrados = portafolio
+        ? m.filter(x => idx[x.contrato_id])
+        : m
+      setMoratorios(morFiltrados)
       setHistorial(h)
     } catch (e) {
       console.error(e)
@@ -50,7 +58,7 @@ export default function Moratorios() {
     setLoading(false)
   }
 
-  useEffect(() => { cargar() }, [])
+  useEffect(() => { cargar() }, [portafolio])
 
   const handleSincronizar = async () => {
     setSincronizando(true)

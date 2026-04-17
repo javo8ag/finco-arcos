@@ -1,23 +1,84 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, FileText, CreditCard,
-  BarChart2, Settings, LogOut, AlertTriangle,
+  BarChart2, Settings, LogOut, AlertTriangle, ChevronDown, Layers,
 } from 'lucide-react'
+import { useState } from 'react'
 import { useAuthStore } from '../../store/authStore'
+import { usePortafolioStore, PORTAFOLIOS } from '../../store/portafolioStore'
 import clsx from 'clsx'
 
 const nav = [
-  { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/clientes',   icon: Users,            label: 'Clientes' },
-  { to: '/contratos',  icon: FileText,         label: 'Contratos' },
-  { to: '/pagos',       icon: CreditCard,       label: 'Cobranza' },
-  { to: '/moratorios',  icon: AlertTriangle,    label: 'Moratorios' },
-  { to: '/reportes',    icon: BarChart2,        label: 'Reportes' },
-  { to: '/configuracion', icon: Settings,      label: 'Configuración' },
+  { to: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/clientes',      icon: Users,           label: 'Clientes' },
+  { to: '/contratos',     icon: FileText,        label: 'Contratos' },
+  { to: '/pagos',         icon: CreditCard,      label: 'Cobranza' },
+  { to: '/moratorios',    icon: AlertTriangle,   label: 'Moratorios' },
+  { to: '/reportes',      icon: BarChart2,       label: 'Reportes' },
+  { to: '/configuracion', icon: Settings,        label: 'Configuración' },
 ]
+
+function SelectorPortafolio({ profile }) {
+  const { portafolioActivo, setPortafolio, getPortafolioInfo } = usePortafolioStore()
+  const [abierto, setAbierto] = useState(false)
+  const info = getPortafolioInfo()
+
+  // admin_fo ve solo su portafolio, no puede cambiar
+  if (profile?.rol === 'admin_fo') {
+    return (
+      <div className="px-4 py-3 border-b border-white/10">
+        <p className="text-xs text-blue-300 opacity-60 mb-1">Portafolio</p>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full" style={{ background: '#ff7900' }} />
+          <span className="text-white text-sm font-medium">{profile.portafolio}</span>
+        </div>
+      </div>
+    )
+  }
+
+  // super_admin puede cambiar de portafolio
+  return (
+    <div className="px-4 py-3 border-b border-white/10 relative">
+      <p className="text-xs text-blue-300 opacity-60 mb-1.5">Vista activa</p>
+      <button
+        onClick={() => setAbierto(v => !v)}
+        className="flex items-center justify-between w-full gap-2 bg-white/10 hover:bg-white/15 rounded-lg px-3 py-2 transition-colors"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-2 h-2 rounded-full shrink-0" style={{ background: info.color }} />
+          <span className="text-white text-sm font-medium truncate">{info.nombre}</span>
+        </div>
+        <ChevronDown size={14} className={`text-blue-300 shrink-0 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+      </button>
+
+      {abierto && (
+        <div className="absolute left-4 right-4 mt-1 bg-white rounded-xl shadow-xl z-50 overflow-hidden border border-gray-100">
+          {PORTAFOLIOS.map(p => (
+            <button
+              key={p.id ?? 'consolidado'}
+              onClick={() => { setPortafolio(p.id); setAbierto(false) }}
+              className={clsx(
+                'flex items-start gap-3 w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0',
+                portafolioActivo === p.id && 'bg-blue-50'
+              )}
+            >
+              <div className="w-2.5 h-2.5 rounded-full mt-1 shrink-0" style={{ background: p.color }} />
+              <div>
+                <p className="text-sm font-medium text-gray-900">{p.nombre}</p>
+                <p className="text-xs text-gray-400">{p.descripcion}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function Sidebar() {
   const { signOut, profile } = useAuthStore()
+  const { getPortafolioInfo } = usePortafolioStore()
+  const info = getPortafolioInfo()
 
   return (
     <aside className="w-64 min-h-screen flex flex-col" style={{ background: '#02106c' }}>
@@ -30,6 +91,9 @@ export default function Sidebar() {
         <p className="text-xs text-blue-200 mt-0.5 opacity-70">Plataforma de Créditos</p>
       </div>
 
+      {/* Selector de portafolio */}
+      <SelectorPortafolio profile={profile} />
+
       {/* Perfil */}
       {profile && (
         <div className="px-4 py-3 border-b border-white/10">
@@ -39,7 +103,7 @@ export default function Sidebar() {
             </div>
             <div className="min-w-0">
               <p className="text-white text-sm font-medium truncate">{profile.nombre || 'Usuario'}</p>
-              <p className="text-blue-300 text-xs truncate opacity-70">{profile.rol || 'Admin'}</p>
+              <p className="text-blue-300 text-xs truncate opacity-70 capitalize">{profile.rol?.replace('_', ' ')}</p>
             </div>
           </div>
         </div>
@@ -65,6 +129,14 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Indicador portafolio activo */}
+      {info.id && (
+        <div className="mx-3 mb-2 px-3 py-2 rounded-lg bg-white/5 flex items-center gap-2">
+          <Layers size={14} className="text-blue-300" />
+          <p className="text-xs text-blue-300">Filtrando: <span className="font-semibold text-white">{info.nombre}</span></p>
+        </div>
+      )}
 
       {/* Cerrar sesión */}
       <div className="px-3 py-4 border-t border-white/10">

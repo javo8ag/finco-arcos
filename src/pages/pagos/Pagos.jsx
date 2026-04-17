@@ -4,6 +4,7 @@ import { CreditCard, AlertTriangle, Clock, CheckCircle } from 'lucide-react'
 import { getPagos, getPagosPendientes, sincronizarMoratorios } from '../../lib/pagosApi'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { calcularMoratorioFila } from '../../utils/prelacion'
+import { usePortafolioStore } from '../../store/portafolioStore'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 
@@ -53,13 +54,17 @@ function SemáforoRow({ fila }) {
 }
 
 export default function Pagos() {
+  const { getFiltroPortafolio } = usePortafolioStore()
   const [pendientes, setPendientes] = useState([])
   const [recientes, setRecientes]   = useState([])
   const [loading, setLoading]       = useState(true)
 
+  const portafolio = getFiltroPortafolio()
+
   useEffect(() => {
+    setLoading(true)
     sincronizarMoratorios() // actualiza estatus silenciosamente
-    Promise.all([getPagosPendientes(), getPagos({ limit: 10 })])
+    Promise.all([getPagosPendientes(portafolio), getPagos({ limit: 10 })])
       .then(([p, r]) => {
         // Calcular días de atraso
         const hoy = new Date()
@@ -71,7 +76,7 @@ export default function Pagos() {
         setRecientes(r)
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [portafolio])
 
   const bucket = (min, max) => pendientes.filter(f => f.dias_atraso >= min && (max == null || f.dias_atraso <= max))
 

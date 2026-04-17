@@ -13,6 +13,7 @@ export const getClientes = async (filtros = {}) => {
     )
   }
   if (filtros.tipo_persona) query = query.eq('tipo_persona', filtros.tipo_persona)
+  if (filtros.portafolio)   query = query.eq('portafolio', filtros.portafolio)
   if (filtros.clasificacion_riesgo) query = query.eq('clasificacion_riesgo', filtros.clasificacion_riesgo)
 
   const { data, error } = await query

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Users, Plus, Search, Eye, Edit, ChevronUp, ChevronDown } from 'lucide-react'
 import { getClientes } from '../../lib/clientesApi'
 import { formatCurrency } from '../../utils/format'
+import { usePortafolioStore } from '../../store/portafolioStore'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 import EmptyState from '../../components/ui/EmptyState'
@@ -11,6 +12,7 @@ const riesgoColor = { A: 'badge-success', B: 'badge-info', C: 'badge-warning', D
 
 export default function Clientes() {
   const navigate = useNavigate()
+  const { getFiltroPortafolio, getPortafolioInfo } = usePortafolioStore()
   const [clientes, setClientes]   = useState([])
   const [loading, setLoading]     = useState(true)
   const [busqueda, setBusqueda]   = useState('')
@@ -19,10 +21,13 @@ export default function Clientes() {
   const [sortCol, setSortCol]     = useState('razon_social')
   const [sortDir, setSortDir]     = useState('asc')
 
+  const portafolio = getFiltroPortafolio()
+  const portafolioInfo = getPortafolioInfo()
+
   const cargar = async () => {
     setLoading(true)
     try {
-      const data = await getClientes({ busqueda, tipo_persona: filtroTipo, clasificacion_riesgo: filtroRiesgo })
+      const data = await getClientes({ busqueda, tipo_persona: filtroTipo, clasificacion_riesgo: filtroRiesgo, portafolio })
       setClientes(data)
     } catch {
       // silencioso — el usuario ve la tabla vacía
@@ -30,7 +35,7 @@ export default function Clientes() {
     setLoading(false)
   }
 
-  useEffect(() => { cargar() }, [busqueda, filtroTipo, filtroRiesgo])
+  useEffect(() => { cargar() }, [busqueda, filtroTipo, filtroRiesgo, portafolio])
 
   const toggleSort = (col) => {
     if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')

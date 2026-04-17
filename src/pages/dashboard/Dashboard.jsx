@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { getDashboardData } from '../../lib/dashboardApi'
 import { formatCurrency, formatDate, formatPercent } from '../../utils/format'
+import { usePortafolioStore } from '../../store/portafolioStore'
 import Spinner from '../../components/ui/Spinner'
 
 // ── Componentes pequeños ───────────────────────────────────────
@@ -52,16 +53,21 @@ const TooltipMXN = ({ active, payload, label }) => {
 // ── Dashboard principal ────────────────────────────────────────
 
 export default function Dashboard() {
-  const navigate = useNavigate()
-  const [data, setData]   = useState(null)
+  const navigate   = useNavigate()
+  const { getFiltroPortafolio, getPortafolioInfo } = usePortafolioStore()
+  const [data, setData]       = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const portafolio     = getFiltroPortafolio()
+  const portafolioInfo = getPortafolioInfo()
+
   useEffect(() => {
-    getDashboardData()
+    setLoading(true)
+    getDashboardData(portafolio)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [])
+  }, [portafolio])
 
   if (loading) return <div className="py-20"><Spinner texto="Cargando dashboard..." /></div>
   if (!data)   return <div className="card text-red-500">Error al cargar el dashboard.</div>
@@ -71,9 +77,19 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Resumen ejecutivo de la cartera — actualizado ahora</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Resumen ejecutivo de la cartera — actualizado ahora</p>
+        </div>
+        {portafolioInfo?.id && (
+          <span
+            className="mt-1 shrink-0 text-xs font-semibold px-3 py-1 rounded-full text-white"
+            style={{ background: portafolioInfo.color }}
+          >
+            {portafolioInfo.nombre}
+          </span>
+        )}
       </div>
 
       {/* KPIs */}

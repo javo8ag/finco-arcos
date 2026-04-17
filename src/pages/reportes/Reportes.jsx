@@ -9,6 +9,7 @@ import {
   generarReporteCartera,
   generarReporteMoratorios,
 } from '../../utils/pdfGenerator'
+import { usePortafolioStore } from '../../store/portafolioStore'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 import { formatCurrency, formatDate } from '../../utils/format'
@@ -31,6 +32,7 @@ function TarjetaReporte({ icon: Icon, titulo, descripcion, children, color = 'te
 }
 
 export default function Reportes() {
+  const { getFiltroPortafolio } = usePortafolioStore()
   const [arrendamientos, setArrendamientos] = useState([])
   const [creditos, setCreditos]             = useState([])
   const [pagos, setPagos]                   = useState([])
@@ -53,24 +55,29 @@ export default function Reportes() {
   // Moratorios
   const [generandoMor, setGenerandoMor] = useState(false)
 
+  const portafolio = getFiltroPortafolio()
+
   useEffect(() => {
+    setLoading(true)
+    const filtros = portafolio ? { portafolio } : {}
     Promise.all([
-      getContratosArrendamiento(),
-      getContratosCredito(),
+      getContratosArrendamiento(filtros),
+      getContratosCredito(filtros),
       getPagos({ limit: 30 }),
       getMoratoriosActivos(),
     ]).then(([arr, crd, pag, mor]) => {
       setArrendamientos(arr ?? [])
       setCreditos(crd ?? [])
       setPagos(pag ?? [])
-      setMoratorios(mor ?? [])
-      // Indexar todos los contratos
+      // Filter moratorios to portfolio contracts
       const idx = {}
       ;[...(arr ?? []), ...(crd ?? [])].forEach(c => { idx[c.id] = c })
       setContratoIdx(idx)
+      setMoratorios(portafolio ? (mor ?? []).filter(m => idx[m.contrato_id]) : (mor ?? []))
+      setContratoEC('')
       setLoading(false)
     })
-  }, [])
+  }, [portafolio])
 
   // ── Estado de cuenta ──
   const handleEstadoCuenta = async () => {

@@ -4,7 +4,7 @@ import { es } from 'date-fns/locale'
 
 // ── KPIs principales ───────────────────────────────────────────
 
-export const getDashboardData = async () => {
+export const getDashboardData = async (portafolio = null) => {
   const hoy = new Date()
   const inicioMes = startOfMonth(hoy).toISOString().split('T')[0]
   const finMes    = endOfMonth(hoy).toISOString().split('T')[0]
@@ -17,9 +17,13 @@ export const getDashboardData = async () => {
     { data: pagosRecientes },
   ] = await Promise.all([
     // Contratos arrendamiento activos/en mora
-    supabase.from('contratos_arrendamiento')
-      .select('id, numero_contrato, estatus, valor_activo, enganche, fecha_inicio, fecha_vencimiento, renta_mensual, clientes(razon_social)')
-      .in('estatus', ['Activo', 'En mora', 'Vencido', 'Liquidado']),
+    (() => {
+      let q = supabase.from('contratos_arrendamiento')
+        .select('id, numero_contrato, estatus, valor_activo, enganche, fecha_inicio, fecha_vencimiento, renta_mensual, portafolio, clientes(razon_social)')
+        .in('estatus', ['Activo', 'En mora', 'Vencido', 'Liquidado'])
+      if (portafolio) q = q.eq('portafolio', portafolio)
+      return q
+    })(),
 
     // Primera fila pendiente por contrato (para saldo insoluto)
     supabase.from('tabla_amortizacion')

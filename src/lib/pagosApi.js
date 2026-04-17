@@ -58,15 +58,14 @@ export const getPagos = async ({ contratoId, contratoTipo, limit = 50 } = {}) =>
   return data
 }
 
-export const getPagosPendientes = async () => {
-  // Contratos arrendamiento con pagos pendientes/atrasados
-  const { data, error } = await supabase
+export const getPagosPendientes = async (portafolio = null) => {
+  let query = supabase
     .from('tabla_amortizacion')
     .select(`
       contrato_id, contrato_tipo, numero_pago, fecha_pago, total_pago,
       saldo_insoluto, estatus_pago,
       contratos_arrendamiento!inner(
-        numero_contrato, tasa_moratoria, dias_gracia, estatus,
+        numero_contrato, tasa_moratoria, dias_gracia, estatus, portafolio,
         clientes(razon_social, rfc)
       )
     `)
@@ -75,6 +74,9 @@ export const getPagosPendientes = async () => {
     .order('fecha_pago')
     .limit(100)
 
+  if (portafolio) query = query.eq('contratos_arrendamiento.portafolio', portafolio)
+
+  const { data, error } = await query
   if (error) throw error
   return data ?? []
 }

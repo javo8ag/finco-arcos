@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FileText, Plus, Eye, Search, ChevronDown } from 'lucide-react'
 import { getContratosArrendamiento, getContratosCredito } from '../../lib/contratosApi'
 import { formatCurrency, formatDate, estatusColor } from '../../utils/format'
+import { usePortafolioStore } from '../../store/portafolioStore'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 import EmptyState from '../../components/ui/EmptyState'
 
 export default function Contratos() {
   const navigate = useNavigate()
+  const { getFiltroPortafolio } = usePortafolioStore()
   const [arrendamientos, setArrendamientos] = useState([])
   const [creditos, setCreditos]             = useState([])
   const [loading, setLoading]               = useState(true)
@@ -17,18 +19,20 @@ export default function Contratos() {
   const [filtroTipo, setFiltroTipo]         = useState('todos')
   const [menuNuevo, setMenuNuevo]           = useState(false)
 
+  const portafolio = getFiltroPortafolio()
+
   const cargar = async () => {
     setLoading(true)
     const [arr, crd] = await Promise.all([
-      getContratosArrendamiento({ estatus: filtroEstatus || undefined }),
-      getContratosCredito({ estatus: filtroEstatus || undefined }),
+      getContratosArrendamiento({ estatus: filtroEstatus || undefined, portafolio }),
+      getContratosCredito({ estatus: filtroEstatus || undefined, portafolio }),
     ])
     setArrendamientos(arr ?? [])
     setCreditos(crd ?? [])
     setLoading(false)
   }
 
-  useEffect(() => { cargar() }, [filtroEstatus])
+  useEffect(() => { cargar() }, [filtroEstatus, portafolio])
 
   // Combinar y etiquetar
   const todos = [
