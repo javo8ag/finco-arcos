@@ -167,6 +167,9 @@ export default function Configuracion() {
         <div className="card text-center py-16 text-gray-400">
           <ShieldOff size={36} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">Solo el Super Admin puede acceder a esta sección.</p>
+          <p className="text-xs mt-2 text-gray-300">
+            Rol actual: <code className="bg-gray-100 px-1 rounded text-gray-500">{profile?.rol ?? 'sin perfil'}</code>
+          </p>
         </div>
       </div>
     )
