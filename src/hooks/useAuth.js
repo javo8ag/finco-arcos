@@ -24,11 +24,13 @@ export function useAuth() {
   }, [])
 
   async function fetchProfile(userId) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('perfiles')
       .select('*')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
+    if (error) console.error('[fetchProfile] error:', error)
+    if (!data) console.warn('[fetchProfile] sin perfil para userId:', userId)
     setProfile(data)
     setLoading(false)
   }

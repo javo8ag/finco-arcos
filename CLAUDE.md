@@ -1,4 +1,8 @@
-# CLAUDE.md - Token Efficient Rules
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Collaboration rules
 
 1. Think before acting. Read existing files before writing code.
 2. Be concise in output but thorough in reasoning.
@@ -11,8 +15,6 @@
 
 ---
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Commands
 
 ```bash
@@ -22,7 +24,7 @@ npm run lint     # ESLint check
 npm run preview  # serve the dist/ build locally
 ```
 
-No test suite is configured. There is no single-test command.
+No test suite is configured.
 
 ## Environment
 
@@ -30,13 +32,14 @@ Requires a `.env` file (or Netlify env vars) with:
 ```
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
+VITE_SUPABASE_SERVICE_ROLE_KEY=...   # required for user management (super_admin only)
 ```
 
-The app throws immediately on startup if these are missing (`src/lib/supabase.js`).
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are required at startup — app throws immediately if missing. `VITE_SUPABASE_SERVICE_ROLE_KEY` is only needed when calling `usuariosApi.js`; the admin client is lazy-initialized so its absence does not break the app.
 
 ## Architecture
 
-**Stack:** React 19 + Vite, TailwindCSS 3, Supabase (PostgreSQL + Auth + RLS), Zustand, React Router v6, React Hook Form + Zod, Recharts, jsPDF + autoTable, date-fns.
+**Stack:** React 19 + Vite, TailwindCSS 3, Supabase (PostgreSQL + Auth + RLS), Zustand, React Router v6, React Hook Form + Zod, Recharts, jsPDF + autoTable, date-fns, papaparse.
 
 **Deployment:** Netlify (frontend) + Supabase (backend). No server-side code — all logic runs in the browser against the Supabase JS client.
 
@@ -71,17 +74,35 @@ Mandatory order: ① Moratorios + IVA → ② Intereses ordinarios + IVA → ③
 
 | File | Responsibility |
 |------|---------------|
-| `supabase.js` | Single Supabase client instance |
+| `supabase.js` | Single anon Supabase client instance |
+| `adminClient.js` | Lazy-initialized service-role client (`getAdminClient()`); throws if `VITE_SUPABASE_SERVICE_ROLE_KEY` is missing |
 | `clientesApi.js` | CRUD for `clientes` |
 | `contratosApi.js` | CRUD for `contratos_arrendamiento` + `contratos_credito`; generates and inserts `tabla_amortizacion` rows on create |
-| `pagosApi.js` | `registrarPago` (multi-step: insert pago, update tabla_amortizacion rows, insert moratorio record); `getPagosPendientes`; `getMoratoriosActivos`; `sincronizarMoratorios` (RPC) |
-| `dashboardApi.js` | Single `getDashboardData(portafolio)` that fetches all KPIs, buckets, charts in parallel |
+| `pagosApi.js` | `registrarPago` (multi-step); `getPagosPendientes`; `getMoratoriosActivos`; `sincronizarMoratorios` (RPC) |
+| `dashboardApi.js` | Single `getDashboardData(portafolio)` fetching all KPIs in parallel |
+| `importApi.js` | CSV template generators, per-row validators, and `importarFilaArrendamiento` / `importarFilaCredito` — upserts client by RFC, creates contract + amortization table, marks `pagos_realizados` rows as Pagado |
+| `usuariosApi.js` | User management via service-role client (`listarUsuarios`, `crearUsuario`, `actualizarUsuario`); own-profile updates via anon client (`actualizarMiPerfil`, `cambiarPassword`, `cambiarEmail`) |
 
 ### Contracts — two types, one list
 
 `contratos_arrendamiento` and `contratos_credito` are separate tables with separate routes (`/contratos/:id` vs `/contratos/credito/:id`). The `Contratos.jsx` list combines both with a `_tipo` flag. `RegistrarPago` is shared via a `tipoContrato` prop.
 
 `tabla_amortizacion` stores rows for both types; the `contrato_tipo` column (`'arrendamiento'` | `'credito'`) distinguishes them since there is no foreign key polymorphism.
+
+### Bulk import (`/importacion`)
+
+`src/pages/importacion/Importacion.jsx` — two-tab flow (Arrendamiento / Crédito):
+1. Download CSV template (generated in browser via `plantillaArrendamiento()` / `plantillaCredito()`)
+2. Upload CSV → parsed with papaparse → validated per row → preview table with expandable errors
+3. Import valid rows: upsert client by RFC → create contract → mark first `pagos_realizados` amortization rows as `Pagado`
+
+### User management (`/configuracion`)
+
+`src/pages/configuracion/Configuracion.jsx` — visible only to `super_admin`. Uses `getAdminClient()` to call `auth.admin.createUser()` and bypass RLS for listing/editing all profiles. Non-super_admin users see an access-denied screen.
+
+### Mi cuenta (`/mi-cuenta`)
+
+`src/pages/cuenta/MiCuenta.jsx` — accessible to all roles. Updates `perfiles.nombre` via anon client; changes email/password via `supabase.auth.updateUser()`.
 
 ### PDF generation
 
@@ -94,8 +115,8 @@ Mandatory order: ① Moratorios + IVA → ② Intereses ordinarios + IVA → ③
 
 ### Database schema
 
-SQL files in `supabase/` must be run manually in the Supabase SQL Editor — there is no migration runner. Key tables: `perfiles`, `clientes`, `contratos_arrendamiento`, `contratos_credito`, `tabla_amortizacion`, `pagos`, `moratorios`. All tables have RLS enabled; the general policy is `auth.role() = 'authenticated'`. The `handle_new_user()` trigger auto-inserts into `perfiles` on signup.
+SQL files in `supabase/` must be run manually in the Supabase SQL Editor — there is no migration runner. Key tables: `perfiles`, `clientes`, `contratos_arrendamiento`, `contratos_credito`, `tabla_amortizacion`, `pagos`, `moratorios`. All tables have RLS enabled. The `handle_new_user()` trigger auto-inserts into `perfiles` on signup.
 
 ## Brand / Design tokens
 
-Primary `#2d43d0`, Accent `#ff7900`, Navy `#02106c`. Font: Archivo (Google Fonts). These are used verbatim in jsPDF output and Tailwind config — keep them consistent when adding PDF reports or new UI sections.
+Primary `#2d43d0`, Accent `#ff7900`, Navy `#02106c`. Font: Archivo (Google Fonts). Used verbatim in jsPDF output and Tailwind config — keep consistent when adding PDF reports or new UI sections.
