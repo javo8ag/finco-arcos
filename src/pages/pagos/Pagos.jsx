@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CreditCard, AlertTriangle, Clock, CheckCircle } from 'lucide-react'
-import { getPagos, getPagosPendientes } from '../../lib/pagosApi'
+import { getPagos, getPagosPendientes, sincronizarMoratorios } from '../../lib/pagosApi'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { calcularMoratorioFila } from '../../utils/prelacion'
 import PageHeader from '../../components/ui/PageHeader'
@@ -58,6 +58,7 @@ export default function Pagos() {
   const [loading, setLoading]       = useState(true)
 
   useEffect(() => {
+    sincronizarMoratorios() // actualiza estatus silenciosamente
     Promise.all([getPagosPendientes(), getPagos({ limit: 10 })])
       .then(([p, r]) => {
         // Calcular días de atraso

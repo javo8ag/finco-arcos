@@ -14,6 +14,7 @@ import CreditoForm from './pages/contratos/CreditoForm'
 import CreditoDetalle from './pages/contratos/CreditoDetalle'
 import Pagos from './pages/pagos/Pagos'
 import RegistrarPago from './pages/pagos/RegistrarPago'
+import Moratorios from './pages/pagos/Moratorios'
 import Reportes from './pages/reportes/Reportes'
 import Configuracion from './pages/configuracion/Configuracion'
 
@@ -51,6 +52,7 @@ function AppRoutes() {
         <Route path="pagos/registrar/:contratoId"          element={<RegistrarPago tipoContrato="arrendamiento" />} />
         <Route path="pagos/registrar-credito/:contratoId"  element={<RegistrarPago tipoContrato="credito" />} />
 
+        <Route path="moratorios"                     element={<Moratorios />} />
         <Route path="reportes"                       element={<Reportes />} />
         <Route path="configuracion"                  element={<Configuracion />} />
       </Route>

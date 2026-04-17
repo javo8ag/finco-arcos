@@ -1,5 +1,46 @@
 import { supabase } from './supabase'
 
+// ── Sincronización automática de moratorios ────────────────────
+// Llama la función SQL que actualiza estatus de contratos y pagos
+export const sincronizarMoratorios = async () => {
+  const { data, error } = await supabase.rpc('sincronizar_moratorios')
+  if (error) console.warn('sincronizar_moratorios:', error.message)
+  return data
+}
+
+// Vista de moratorios activos por contrato
+export const getMoratoriosActivos = async () => {
+  const { data, error } = await supabase
+    .from('moratorios_activos')
+    .select('*')
+    .gt('moratorio_con_iva', 0)
+    .order('max_dias_atraso', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+// Historial de moratorios condonados / registrados
+export const getHistorialMoratorios = async (contratoId, contratoTipo) => {
+  let q = supabase
+    .from('moratorios')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (contratoId)   q = q.eq('contrato_id', contratoId)
+  if (contratoTipo) q = q.eq('contrato_tipo', contratoTipo)
+  const { data, error } = await q
+  if (error) throw error
+  return data ?? []
+}
+
+// Condonar moratorio (requiere motivo, deja auditoría)
+export const condonarMoratorio = async (moratorioId, motivo, userId) => {
+  const { error } = await supabase
+    .from('moratorios')
+    .update({ condonado: true, condonado_por: userId, motivo_condonacion: motivo })
+    .eq('id', moratorioId)
+  if (error) throw error
+}
+
 // ── Consultas ──────────────────────────────────────────────────
 
 export const getPagos = async ({ contratoId, contratoTipo, limit = 50 } = {}) => {
