@@ -11,6 +11,7 @@ import Contratos from './pages/contratos/Contratos'
 import ContratoForm from './pages/contratos/ContratoForm'
 import ContratoDetalle from './pages/contratos/ContratoDetalle'
 import Pagos from './pages/pagos/Pagos'
+import RegistrarPago from './pages/pagos/RegistrarPago'
 import Reportes from './pages/reportes/Reportes'
 import Configuracion from './pages/configuracion/Configuracion'
 
@@ -36,7 +37,8 @@ function AppRoutes() {
         <Route path="contratos"                      element={<Contratos />} />
         <Route path="contratos/nuevo-arrendamiento"  element={<ContratoForm />} />
         <Route path="contratos/:id"                  element={<ContratoDetalle />} />
-        <Route path="pagos"                  element={<Pagos />} />
+        <Route path="pagos"                       element={<Pagos />} />
+        <Route path="pagos/registrar/:contratoId" element={<RegistrarPago />} />
         <Route path="reportes"              element={<Reportes />} />
         <Route path="configuracion"          element={<Configuracion />} />
       </Route>

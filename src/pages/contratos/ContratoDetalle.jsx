@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Car, Calendar, TrendingUp, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Car, Calendar, TrendingUp, CheckCircle, Clock, AlertCircle, CreditCard } from 'lucide-react'
 import { getContratoArrendamientoById, getTablaAmortizacion } from '../../lib/contratosApi'
 import { formatCurrency, formatDate, estatusColor } from '../../utils/format'
 import { calcularDiasAtraso as diasAtraso } from '../../utils/amortizacion'
@@ -71,6 +71,11 @@ export default function ContratoDetalle() {
         <button onClick={() => navigate('/contratos')} className="btn-secondary flex items-center gap-2">
           <ArrowLeft size={16} /> Regresar
         </button>
+        {contrato.estatus === 'Activo' || contrato.estatus === 'En mora' ? (
+          <button onClick={() => navigate(`/pagos/registrar/${id}`)} className="btn-accent flex items-center gap-2">
+            <CreditCard size={16} /> Registrar pago
+          </button>
+        ) : null}
       </PageHeader>
 
       {/* KPIs */}
