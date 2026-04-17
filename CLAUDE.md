@@ -117,6 +117,8 @@ Mandatory order: ① Moratorios + IVA → ② Intereses ordinarios + IVA → ③
 
 SQL files in `supabase/` must be run manually in the Supabase SQL Editor — there is no migration runner. Key tables: `perfiles`, `clientes`, `contratos_arrendamiento`, `contratos_credito`, `tabla_amortizacion`, `pagos`, `moratorios`. All tables have RLS enabled. The `handle_new_user()` trigger auto-inserts into `perfiles` on signup.
 
+**RLS pitfall — never add a self-referential policy on `perfiles`:** A policy like `EXISTS (SELECT 1 FROM perfiles WHERE id = auth.uid() AND rol = 'super_admin')` causes infinite recursion (HTTP 500) because evaluating the policy triggers the same policy again. Use `auth.uid() = id` for row-level access. Admin operations that need to read all profiles must use the service-role client (`getAdminClient()`) which bypasses RLS entirely.
+
 ## Brand / Design tokens
 
 Primary `#2d43d0`, Accent `#ff7900`, Navy `#02106c`. Font: Archivo (Google Fonts). Used verbatim in jsPDF output and Tailwind config — keep consistent when adding PDF reports or new UI sections.
