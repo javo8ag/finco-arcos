@@ -10,6 +10,8 @@ import ClienteDetalle from './pages/clientes/ClienteDetalle'
 import Contratos from './pages/contratos/Contratos'
 import ContratoForm from './pages/contratos/ContratoForm'
 import ContratoDetalle from './pages/contratos/ContratoDetalle'
+import CreditoForm from './pages/contratos/CreditoForm'
+import CreditoDetalle from './pages/contratos/CreditoDetalle'
 import Pagos from './pages/pagos/Pagos'
 import RegistrarPago from './pages/pagos/RegistrarPago'
 import Reportes from './pages/reportes/Reportes'
@@ -29,18 +31,28 @@ function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard"              element={<Dashboard />} />
-        <Route path="clientes"               element={<Clientes />} />
-        <Route path="clientes/nuevo"         element={<ClienteForm />} />
-        <Route path="clientes/:id"           element={<ClienteDetalle />} />
-        <Route path="clientes/:id/editar"    element={<ClienteForm />} />
+        <Route path="dashboard"                      element={<Dashboard />} />
+
+        {/* Clientes */}
+        <Route path="clientes"                       element={<Clientes />} />
+        <Route path="clientes/nuevo"                 element={<ClienteForm />} />
+        <Route path="clientes/:id"                   element={<ClienteDetalle />} />
+        <Route path="clientes/:id/editar"            element={<ClienteForm />} />
+
+        {/* Contratos */}
         <Route path="contratos"                      element={<Contratos />} />
         <Route path="contratos/nuevo-arrendamiento"  element={<ContratoForm />} />
+        <Route path="contratos/nuevo-credito"        element={<CreditoForm />} />
         <Route path="contratos/:id"                  element={<ContratoDetalle />} />
-        <Route path="pagos"                       element={<Pagos />} />
-        <Route path="pagos/registrar/:contratoId" element={<RegistrarPago />} />
-        <Route path="reportes"              element={<Reportes />} />
-        <Route path="configuracion"          element={<Configuracion />} />
+        <Route path="contratos/credito/:id"          element={<CreditoDetalle />} />
+
+        {/* Pagos */}
+        <Route path="pagos"                                element={<Pagos />} />
+        <Route path="pagos/registrar/:contratoId"          element={<RegistrarPago tipoContrato="arrendamiento" />} />
+        <Route path="pagos/registrar-credito/:contratoId"  element={<RegistrarPago tipoContrato="credito" />} />
+
+        <Route path="reportes"                       element={<Reportes />} />
+        <Route path="configuracion"                  element={<Configuracion />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

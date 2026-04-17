@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CreditCard, AlertTriangle, CheckCircle, Info } from 'lucide-react'
-import { getContratoArrendamientoById, getTablaAmortizacion } from '../../lib/contratosApi'
+import { getContratoArrendamientoById, getContratoCreditoById, getTablaAmortizacion } from '../../lib/contratosApi'
 import { registrarPago } from '../../lib/pagosApi'
 import { aplicarPrelacion, calcularMoratorioFila } from '../../utils/prelacion'
 import { formatCurrency, formatDate } from '../../utils/format'
@@ -9,10 +9,11 @@ import { useAuthStore } from '../../store/authStore'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 
-export default function RegistrarPago() {
+export default function RegistrarPago({ tipoContrato = 'arrendamiento' }) {
   const { contratoId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const contratoTipo = tipoContrato
 
   const [contrato, setContrato]         = useState(null)
   const [filasPendientes, setFilasPendientes] = useState([])
@@ -33,8 +34,10 @@ export default function RegistrarPago() {
 
   useEffect(() => {
     Promise.all([
-      getContratoArrendamientoById(contratoId),
-      getTablaAmortizacion(contratoId, 'arrendamiento'),
+      contratoTipo === 'arrendamiento'
+        ? getContratoArrendamientoById(contratoId)
+        : getContratoCreditoById(contratoId),
+      getTablaAmortizacion(contratoId, contratoTipo),
     ]).then(([c, tabla]) => {
       setContrato(c)
       const pendientes = tabla
@@ -67,7 +70,7 @@ export default function RegistrarPago() {
     try {
       await registrarPago({
         contratoId,
-        contratoTipo:        'arrendamiento',
+        contratoTipo:        contratoTipo,
         clienteId:           contrato.cliente_id,
         fechaPago:           fecha,
         montoRecibido:       parseFloat(monto),
@@ -84,7 +87,7 @@ export default function RegistrarPago() {
         moratorio:           prelacion.moratorio,
       })
       setExito(true)
-      setTimeout(() => navigate(`/contratos/${contratoId}`), 1800)
+      setTimeout(() => navigate(contratoTipo === 'credito' ? `/contratos/credito/${contratoId}` : `/contratos/${contratoId}`), 1800)
     } catch {
       setError('Error al registrar el pago. Intenta de nuevo.')
     }
@@ -108,7 +111,7 @@ export default function RegistrarPago() {
         titulo="Registrar pago"
         subtitulo={`${contrato.numero_contrato} · ${contrato.clientes?.razon_social}`}
       >
-        <button onClick={() => navigate(`/contratos/${contratoId}`)} className="btn-secondary flex items-center gap-2">
+        <button onClick={() => navigate(contratoTipo === 'credito' ? `/contratos/credito/${contratoId}` : `/contratos/${contratoId}`)} className="btn-secondary flex items-center gap-2">
           <ArrowLeft size={16} /> Regresar
         </button>
       </PageHeader>

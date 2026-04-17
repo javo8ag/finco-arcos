@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FileText, Plus, Eye, Search } from 'lucide-react'
-import { getContratosArrendamiento } from '../../lib/contratosApi'
+import { FileText, Plus, Eye, Search, ChevronDown } from 'lucide-react'
+import { getContratosArrendamiento, getContratosCredito } from '../../lib/contratosApi'
 import { formatCurrency, formatDate, estatusColor } from '../../utils/format'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
@@ -9,25 +9,44 @@ import EmptyState from '../../components/ui/EmptyState'
 
 export default function Contratos() {
   const navigate = useNavigate()
-  const [contratos, setContratos] = useState([])
-  const [loading, setLoading]     = useState(true)
-  const [busqueda, setBusqueda]   = useState('')
-  const [filtroEstatus, setFiltroEstatus] = useState('')
+  const [arrendamientos, setArrendamientos] = useState([])
+  const [creditos, setCreditos]             = useState([])
+  const [loading, setLoading]               = useState(true)
+  const [busqueda, setBusqueda]             = useState('')
+  const [filtroEstatus, setFiltroEstatus]   = useState('')
+  const [filtroTipo, setFiltroTipo]         = useState('todos')
+  const [menuNuevo, setMenuNuevo]           = useState(false)
 
-  useEffect(() => {
-    getContratosArrendamiento({ estatus: filtroEstatus || undefined })
-      .then(data => { setContratos(data); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [filtroEstatus])
+  const cargar = async () => {
+    setLoading(true)
+    const [arr, crd] = await Promise.all([
+      getContratosArrendamiento({ estatus: filtroEstatus || undefined }),
+      getContratosCredito({ estatus: filtroEstatus || undefined }),
+    ])
+    setArrendamientos(arr ?? [])
+    setCreditos(crd ?? [])
+    setLoading(false)
+  }
 
-  const filtrados = contratos.filter(c => {
+  useEffect(() => { cargar() }, [filtroEstatus])
+
+  // Combinar y etiquetar
+  const todos = [
+    ...arrendamientos.map(c => ({ ...c, _tipo: 'arrendamiento' })),
+    ...creditos.map(c => ({ ...c, _tipo: 'credito', valor_activo: c.monto_credito, renta_mensual: null })),
+  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+  const filtrados = todos.filter(c => {
+    if (filtroTipo === 'arrendamiento' && c._tipo !== 'arrendamiento') return false
+    if (filtroTipo === 'credito'       && c._tipo !== 'credito')       return false
     if (!busqueda) return true
     const q = busqueda.toLowerCase()
     return (
       c.numero_contrato?.toLowerCase().includes(q) ||
       c.clientes?.razon_social?.toLowerCase().includes(q) ||
       c.clientes?.rfc?.toLowerCase().includes(q) ||
-      `${c.marca} ${c.modelo}`.toLowerCase().includes(q)
+      (c._tipo === 'arrendamiento' && `${c.marca} ${c.modelo}`.toLowerCase().includes(q)) ||
+      c.proposito?.toLowerCase().includes(q)
     )
   })
 
@@ -36,9 +55,33 @@ export default function Contratos() {
   return (
     <div>
       <PageHeader icon={FileText} titulo="Contratos" subtitulo="Arrendamientos financieros y créditos simples">
-        <Link to="/contratos/nuevo-arrendamiento" className="btn-primary flex items-center gap-2">
-          <Plus size={16} /> Nuevo arrendamiento
-        </Link>
+        {/* Menú desplegable nuevo */}
+        <div className="relative">
+          <button
+            onClick={() => setMenuNuevo(v => !v)}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus size={16} /> Nuevo contrato <ChevronDown size={14} />
+          </button>
+          {menuNuevo && (
+            <div className="absolute right-0 mt-1 w-52 bg-white border border-gray-200 rounded-lg shadow-card z-10">
+              <Link
+                to="/contratos/nuevo-arrendamiento"
+                onClick={() => setMenuNuevo(false)}
+                className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"
+              >
+                🚗 Arrendamiento financiero
+              </Link>
+              <Link
+                to="/contratos/nuevo-credito"
+                onClick={() => setMenuNuevo(false)}
+                className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg border-t border-gray-100"
+              >
+                💼 Crédito simple
+              </Link>
+            </div>
+          )}
+        </div>
       </PageHeader>
 
       {/* Filtros */}
@@ -53,29 +96,34 @@ export default function Contratos() {
             </div>
           </div>
           <div>
+            <label className="label">Tipo</label>
+            <select className="input" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}>
+              <option value="todos">Todos</option>
+              <option value="arrendamiento">Arrendamiento</option>
+              <option value="credito">Crédito simple</option>
+            </select>
+          </div>
+          <div>
             <label className="label">Estatus</label>
             <select className="input" value={filtroEstatus} onChange={e => setFiltroEstatus(e.target.value)}>
               <option value="">Todos</option>
-              {['Activo','En mora','Vencido','Liquidado','Cancelado'].map(e => (
+              {['Activo', 'En mora', 'Vencido', 'Liquidado', 'Cancelado'].map(e => (
                 <option key={e} value={e}>{e}</option>
               ))}
             </select>
           </div>
-          {(busqueda || filtroEstatus) && (
+          {(busqueda || filtroEstatus || filtroTipo !== 'todos') && (
             <button className="btn-secondary text-sm"
-              onClick={() => { setBusqueda(''); setFiltroEstatus('') }}>
+              onClick={() => { setBusqueda(''); setFiltroEstatus(''); setFiltroTipo('todos') }}>
               Limpiar
             </button>
           )}
         </div>
       </div>
 
+      {/* Tabla */}
       {loading ? <Spinner /> : filtrados.length === 0 ? (
-        <EmptyState titulo="No hay contratos" descripcion="Crea el primer contrato de arrendamiento.">
-          <Link to="/contratos/nuevo-arrendamiento" className="btn-primary inline-flex items-center gap-2">
-            <Plus size={16} /> Nuevo arrendamiento
-          </Link>
-        </EmptyState>
+        <EmptyState titulo="No hay contratos" descripcion="Crea tu primer contrato con el botón de arriba." />
       ) : (
         <div className="card p-0 overflow-hidden">
           <div className="overflow-x-auto">
@@ -83,11 +131,11 @@ export default function Contratos() {
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className={thCls}>Contrato</th>
+                  <th className={thCls}>Tipo</th>
                   <th className={thCls}>Cliente</th>
-                  <th className={thCls}>Vehículo</th>
-                  <th className={thCls}>Valor activo</th>
-                  <th className={thCls}>Renta mensual</th>
-                  <th className={thCls}>Plazo</th>
+                  <th className={thCls}>Bien / Destino</th>
+                  <th className={thCls}>Monto</th>
+                  <th className={thCls}>Pago mensual</th>
                   <th className={thCls}>Inicio</th>
                   <th className={thCls}>Estatus</th>
                   <th className="px-4 py-3"></th>
@@ -100,17 +148,24 @@ export default function Contratos() {
                       {c.numero_contrato}
                     </td>
                     <td className="px-4 py-3">
+                      {c._tipo === 'arrendamiento'
+                        ? <span className="badge-info">Arrend.</span>
+                        : <span className="badge-gray">Crédito</span>
+                      }
+                    </td>
+                    <td className="px-4 py-3">
                       <p className="text-sm font-medium text-gray-900">{c.clientes?.razon_social}</p>
                       <p className="text-xs text-gray-400">{c.clientes?.rfc}</p>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {c.marca} {c.modelo} {c.anio}
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {c._tipo === 'arrendamiento'
+                        ? `${c.marca} ${c.modelo} ${c.anio}`
+                        : c.proposito}
                     </td>
                     <td className="px-4 py-3 text-sm">{formatCurrency(c.valor_activo)}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-gray-800">
-                      {formatCurrency(c.renta_mensual)}
+                      {c.renta_mensual ? formatCurrency(c.renta_mensual) : '—'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{c.plazo_meses} m</td>
                     <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
                       {formatDate(c.fecha_inicio)}
                     </td>
@@ -118,9 +173,15 @@ export default function Contratos() {
                       <span className={estatusColor(c.estatus)}>{c.estatus}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <button onClick={() => navigate(`/contratos/${c.id}`)}
+                      <button
+                        onClick={() => navigate(
+                          c._tipo === 'arrendamiento'
+                            ? `/contratos/${c.id}`
+                            : `/contratos/credito/${c.id}`
+                        )}
                         className="p-1.5 text-gray-400 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Ver detalle">
+                        title="Ver detalle"
+                      >
                         <Eye size={16} />
                       </button>
                     </td>
@@ -129,8 +190,11 @@ export default function Contratos() {
               </tbody>
             </table>
           </div>
-          <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
-            <p className="text-xs text-gray-400">{filtrados.length} contrato{filtrados.length !== 1 ? 's' : ''}</p>
+          <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 flex gap-6">
+            <p className="text-xs text-gray-400">{filtrados.length} contratos</p>
+            <p className="text-xs text-gray-400">
+              {arrendamientos.length} arrendamientos · {creditos.length} créditos
+            </p>
           </div>
         </div>
       )}
