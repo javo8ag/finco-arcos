@@ -17,6 +17,8 @@ import RegistrarPago from './pages/pagos/RegistrarPago'
 import Moratorios from './pages/pagos/Moratorios'
 import Reportes from './pages/reportes/Reportes'
 import Configuracion from './pages/configuracion/Configuracion'
+import Importacion from './pages/importacion/Importacion'
+import MiCuenta from './pages/cuenta/MiCuenta'
 
 function AppRoutes() {
   useAuth()
@@ -55,6 +57,8 @@ function AppRoutes() {
         <Route path="moratorios"                     element={<Moratorios />} />
         <Route path="reportes"                       element={<Reportes />} />
         <Route path="configuracion"                  element={<Configuracion />} />
+        <Route path="importacion"                    element={<Importacion />} />
+        <Route path="mi-cuenta"                      element={<MiCuenta />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

@@ -1,7 +1,7 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import {
   LayoutDashboard, Users, FileText, CreditCard,
-  BarChart2, Settings, LogOut, AlertTriangle, ChevronDown, Layers,
+  BarChart2, Settings, LogOut, AlertTriangle, ChevronDown, Layers, Upload, UserCircle,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../../store/authStore'
@@ -15,6 +15,7 @@ const nav = [
   { to: '/pagos',         icon: CreditCard,      label: 'Cobranza' },
   { to: '/moratorios',    icon: AlertTriangle,   label: 'Moratorios' },
   { to: '/reportes',      icon: BarChart2,       label: 'Reportes' },
+  { to: '/importacion',   icon: Upload,          label: 'Importación' },
   { to: '/configuracion', icon: Settings,        label: 'Configuración' },
 ]
 
@@ -98,13 +99,16 @@ export default function Sidebar() {
       {profile && (
         <div className="px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-medium">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-medium shrink-0">
               {profile.nombre?.charAt(0) || 'U'}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-white text-sm font-medium truncate">{profile.nombre || 'Usuario'}</p>
               <p className="text-blue-300 text-xs truncate opacity-70 capitalize">{profile.rol?.replace('_', ' ')}</p>
             </div>
+            <Link to="/mi-cuenta" title="Mi cuenta" className="text-blue-300 hover:text-white transition-colors shrink-0">
+              <UserCircle size={18} />
+            </Link>
           </div>
         </div>
       )}
