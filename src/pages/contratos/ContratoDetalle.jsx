@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Car, Calendar, TrendingUp, CheckCircle, Clock, AlertCircle, CreditCard, Info } from 'lucide-react'
+import { ArrowLeft, Car, Calendar, TrendingUp, CheckCircle, Clock, AlertCircle, CreditCard, Info, Upload } from 'lucide-react'
+import ModalHistorialPagos from '../../components/ui/ModalHistorialPagos'
 import { getContratoArrendamientoById, getTablaAmortizacion } from '../../lib/contratosApi'
 import { formatCurrency, formatDate, estatusColor } from '../../utils/format'
 import { calcularDiasAtraso as diasAtraso } from '../../utils/amortizacion'
@@ -28,10 +29,11 @@ function KPI({ label, value, sub, color = 'text-gray-900' }) {
 export default function ContratoDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [contrato, setContrato] = useState(null)
-  const [tabla, setTabla]       = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState('')
+  const [contrato,       setContrato]       = useState(null)
+  const [tabla,          setTabla]          = useState([])
+  const [loading,        setLoading]        = useState(true)
+  const [error,          setError]          = useState('')
+  const [modalHistorial, setModalHistorial] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -99,12 +101,25 @@ export default function ContratoDetalle() {
         <button onClick={() => navigate('/contratos')} className="btn-secondary flex items-center gap-2">
           <ArrowLeft size={16} /> Regresar
         </button>
+        <button onClick={() => setModalHistorial(true)} className="btn-secondary flex items-center gap-2">
+          <Upload size={16} /> Cargar historial
+        </button>
         {contrato.estatus === 'Activo' || contrato.estatus === 'En mora' ? (
           <button onClick={() => navigate(`/pagos/registrar/${id}`)} className="btn-accent flex items-center gap-2">
             <CreditCard size={16} /> Registrar pago
           </button>
         ) : null}
       </PageHeader>
+
+      {modalHistorial && (
+        <ModalHistorialPagos
+          contratoId={id}
+          contratoTipo="arrendamiento"
+          contrato={contrato}
+          onClose={() => setModalHistorial(false)}
+          onDone={() => { setModalHistorial(false); window.location.reload() }}
+        />
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">

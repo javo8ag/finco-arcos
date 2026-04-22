@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CreditCard, TrendingUp, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { ArrowLeft, CreditCard, TrendingUp, Calendar, CheckCircle, Clock, AlertCircle, Upload } from 'lucide-react'
+import ModalHistorialPagos from '../../components/ui/ModalHistorialPagos'
 import { getContratoCreditoById, getTablaAmortizacion } from '../../lib/contratosApi'
 import { formatCurrency, formatDate, estatusColor } from '../../utils/format'
 import { calcularDiasAtraso } from '../../utils/amortizacion'
@@ -28,10 +29,11 @@ function KPI({ label, value, sub, color = 'text-gray-900' }) {
 export default function CreditoDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [contrato, setContrato] = useState(null)
-  const [tabla, setTabla]       = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState('')
+  const [contrato,       setContrato]       = useState(null)
+  const [tabla,          setTabla]          = useState([])
+  const [loading,        setLoading]        = useState(true)
+  const [error,          setError]          = useState('')
+  const [modalHistorial, setModalHistorial] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -74,6 +76,9 @@ export default function CreditoDetalle() {
         <button onClick={() => navigate('/contratos')} className="btn-secondary flex items-center gap-2">
           <ArrowLeft size={16} /> Regresar
         </button>
+        <button onClick={() => setModalHistorial(true)} className="btn-secondary flex items-center gap-2">
+          <Upload size={16} /> Cargar historial
+        </button>
         {['Activo', 'En mora'].includes(contrato.estatus) && (
           <button
             onClick={() => navigate(`/pagos/registrar-credito/${id}`)}
@@ -83,6 +88,16 @@ export default function CreditoDetalle() {
           </button>
         )}
       </PageHeader>
+
+      {modalHistorial && (
+        <ModalHistorialPagos
+          contratoId={id}
+          contratoTipo="credito"
+          contrato={contrato}
+          onClose={() => setModalHistorial(false)}
+          onDone={() => { setModalHistorial(false); window.location.reload() }}
+        />
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
