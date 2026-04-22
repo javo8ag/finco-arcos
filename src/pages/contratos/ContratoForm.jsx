@@ -12,26 +12,30 @@ import { useAuthStore } from '../../store/authStore'
 import PageHeader from '../../components/ui/PageHeader'
 
 const schema = z.object({
-  numero_contrato:  z.string().min(1, 'Requerido'),
-  cliente_id:       z.string().uuid('Selecciona un cliente'),
-  portafolio:       z.string().optional(),
-  marca:            z.string().min(1, 'Requerido'),
-  modelo:           z.string().min(1, 'Requerido'),
-  anio:             z.coerce.number().min(2000).max(2100),
-  niv:              z.string().optional(),
-  placas:           z.string().optional(),
-  valor_activo:     z.coerce.number().min(1, 'Requerido'),
-  enganche:         z.coerce.number().min(0),
-  plazo_meses:      z.coerce.number().min(1),
-  tasa_ordinaria:   z.coerce.number().min(0.01, 'Requerido'),
-  tasa_moratoria:   z.coerce.number().min(0.01, 'Requerido'),
-  dias_gracia:      z.coerce.number().min(0),
-  valor_residual:   z.coerce.number().min(0),
-  gps_mensual:      z.coerce.number().min(0),
-  seguro_mensual:   z.coerce.number().min(0),
-  gastos_admin:     z.coerce.number().min(0),
-  cargo_seguridad:  z.coerce.number().min(0),
-  fecha_inicio:     z.string().min(1, 'Requerido'),
+  numero_contrato:     z.string().min(1, 'Requerido'),
+  cliente_id:          z.string().uuid('Selecciona un cliente'),
+  portafolio:          z.string().optional(),
+  tipo_arrendamiento:  z.enum(['financiero', 'puro']),
+  tipo_renta:          z.enum(['fija', 'variable']),
+  indice_ajuste:       z.string().optional(),
+  frecuencia_ajuste:   z.string().optional(),
+  marca:               z.string().min(1, 'Requerido'),
+  modelo:              z.string().min(1, 'Requerido'),
+  anio:                z.coerce.number().min(2000).max(2100),
+  niv:                 z.string().optional(),
+  placas:              z.string().optional(),
+  valor_activo:        z.coerce.number().min(1, 'Requerido'),
+  enganche:            z.coerce.number().min(0),
+  plazo_meses:         z.coerce.number().min(1),
+  tasa_ordinaria:      z.coerce.number().min(0.01, 'Requerido'),
+  tasa_moratoria:      z.coerce.number().min(0.01, 'Requerido'),
+  dias_gracia:         z.coerce.number().min(0),
+  valor_residual:      z.coerce.number().min(0),
+  gps_mensual:         z.coerce.number().min(0),
+  seguro_mensual:      z.coerce.number().min(0),
+  gastos_admin:        z.coerce.number().min(0),
+  cargo_seguridad:     z.coerce.number().min(0),
+  fecha_inicio:        z.string().min(1, 'Requerido'),
 })
 
 const F = ({ label, children, error }) => (
@@ -55,6 +59,8 @@ export default function ContratoForm() {
     resolver: zodResolver(schema),
     defaultValues: {
       cliente_id: params.get('cliente') || '',
+      tipo_arrendamiento: 'financiero',
+      tipo_renta: 'fija',
       enganche: 0, valor_residual: 0, dias_gracia: 0,
       gps_mensual: 0, seguro_mensual: 0, gastos_admin: 0, cargo_seguridad: 0,
       tasa_moratoria: 0,
@@ -64,6 +70,8 @@ export default function ContratoForm() {
   })
 
   const valores = watch()
+  const tipoArr  = watch('tipo_arrendamiento')
+  const tipoRenta = watch('tipo_renta')
 
   useEffect(() => {
     getClientes().then(setClientes)
@@ -120,7 +128,10 @@ export default function ContratoForm() {
 
   return (
     <div>
-      <PageHeader titulo="Nuevo contrato de arrendamiento" subtitulo="Arrendamiento financiero vehicular">
+      <PageHeader
+        titulo="Nuevo contrato de arrendamiento"
+        subtitulo={tipoArr === 'puro' ? 'Arrendamiento puro vehicular — bien en balance Finco' : 'Arrendamiento financiero vehicular'}
+      >
         <button onClick={() => navigate('/contratos')} className="btn-secondary flex items-center gap-2">
           <ArrowLeft size={16} /> Regresar
         </button>
@@ -133,6 +144,54 @@ export default function ContratoForm() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+        {/* Tipo de arrendamiento */}
+        <div className="card">
+          <h2 className="text-base font-semibold text-gray-800 mb-3">Tipo de arrendamiento</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { value: 'financiero', title: 'Arrendamiento Financiero', desc: 'Opción de compra al final. Activo en balance del arrendatario. El arrendatario deduce depreciación + intereses (IFRS 16).' },
+              { value: 'puro',       title: 'Arrendamiento Puro',       desc: 'Bien permanece en balance de Finco Arcos. El arrendatario deduce la renta completa como gasto. Finco deduce la depreciación.' },
+            ].map(opt => (
+              <label key={opt.value} className={`flex gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${tipoArr === opt.value ? 'border-primary bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                <input type="radio" value={opt.value} {...register('tipo_arrendamiento')} className="mt-1 text-primary shrink-0" />
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">{opt.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {/* Tipo de renta */}
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="label">Tipo de renta</label>
+              <select {...register('tipo_renta')} className="input">
+                <option value="fija">Fija</option>
+                <option value="variable">Variable (indexada)</option>
+              </select>
+            </div>
+            {tipoRenta === 'variable' && (
+              <>
+                <div>
+                  <label className="label">Índice de ajuste</label>
+                  <select {...register('indice_ajuste')} className="input">
+                    <option value="">— Seleccionar —</option>
+                    {['INPC','TIIE 28d','UDI','Tipo de cambio USD'].map(i => <option key={i}>{i}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Frecuencia de ajuste</label>
+                  <select {...register('frecuencia_ajuste')} className="input">
+                    <option value="">— Seleccionar —</option>
+                    {['Trimestral','Semestral','Anual'].map(f => <option key={f}>{f}</option>)}
+                  </select>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
         {/* Identificación */}
         <div className="card">
@@ -190,7 +249,7 @@ export default function ContratoForm() {
             <F label="Enganche / Renta anticipada (MXN)">
               <input type="number" step="1000" {...register('enganche')} className="input" placeholder="0" />
             </F>
-            <F label="Valor residual / Opción de compra (MXN)">
+            <F label={tipoArr === 'puro' ? 'Valor residual al término (MXN)' : 'Valor residual / Opción de compra (MXN)'}>
               <input type="number" step="1000" {...register('valor_residual')} className="input" placeholder="0" />
             </F>
             <F label="Plazo (meses) *" error={errors.plazo_meses?.message}>

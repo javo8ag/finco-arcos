@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CreditCard, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 import { getContratoArrendamientoById, getContratoCreditoById, getTablaAmortizacion } from '../../lib/contratosApi'
 import { registrarPago } from '../../lib/pagosApi'
+import { verificarUmbralEfectivo } from '../../lib/pldApi'
 import { aplicarPrelacion, calcularMoratorioFila } from '../../utils/prelacion'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { useAuthStore } from '../../store/authStore'
@@ -86,6 +87,16 @@ export default function RegistrarPago({ tipoContrato = 'arrendamiento' }) {
         filasActualizar:     prelacion.filasActualizar,
         moratorio:           prelacion.moratorio,
       })
+      // Verificar umbral PLD (fire-and-forget)
+      verificarUmbralEfectivo({
+        clienteId:       contrato.cliente_id,
+        clienteNombre:   contrato.clientes?.razon_social ?? '',
+        montoRecibido:   parseFloat(monto),
+        formaPago,
+        contratoNumero:  contrato.numero_contrato,
+        userId:          user?.id,
+      }).catch(() => {})
+
       setExito(true)
       setTimeout(() => navigate(contratoTipo === 'credito' ? `/contratos/credito/${contratoId}` : `/contratos/${contratoId}`), 1800)
     } catch {

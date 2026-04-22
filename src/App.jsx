@@ -19,6 +19,11 @@ import Reportes from './pages/reportes/Reportes'
 import Configuracion from './pages/configuracion/Configuracion'
 import Importacion from './pages/importacion/Importacion'
 import MiCuenta from './pages/cuenta/MiCuenta'
+import Fondeo from './pages/fondeo/Fondeo'
+import Activos from './pages/activos/Activos'
+import PLD from './pages/pld/PLD'
+import ClasificacionCartera from './pages/cartera/ClasificacionCartera'
+import AtencionClientes from './pages/atencion/AtencionClientes'
 
 function AppRoutes() {
   useAuth()
@@ -56,6 +61,11 @@ function AppRoutes() {
 
         <Route path="moratorios"                     element={<Moratorios />} />
         <Route path="reportes"                       element={<Reportes />} />
+        <Route path="clasificacion"                  element={<ClasificacionCartera />} />
+        <Route path="atencion"                       element={<AtencionClientes />} />
+        <Route path="fondeo"                         element={<Fondeo />} />
+        <Route path="activos"                        element={<Activos />} />
+        <Route path="pld"                            element={<PLD />} />
         <Route path="configuracion"                  element={<Configuracion />} />
         <Route path="importacion"                    element={<Importacion />} />
         <Route path="mi-cuenta"                      element={<MiCuenta />} />

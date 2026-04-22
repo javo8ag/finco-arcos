@@ -75,8 +75,8 @@ export const validarArrendamiento = (row) => {
   const pagos = Number(row.pagos_realizados)
   if (isNaN(pagos) || pagos < 0)
     errs.push('pagos_realizados debe ser 0 o mayor')
-  else if (pagos >= Number(row.plazo_meses))
-    errs.push('pagos_realizados debe ser menor que plazo_meses')
+  else if (pagos > Number(row.plazo_meses))
+    errs.push('pagos_realizados no puede exceder plazo_meses')
   return errs
 }
 
@@ -101,8 +101,8 @@ export const validarCredito = (row) => {
   const pagos = Number(row.pagos_realizados)
   if (isNaN(pagos) || pagos < 0)
     errs.push('pagos_realizados debe ser 0 o mayor')
-  else if (pagos >= Number(row.plazo_meses))
-    errs.push('pagos_realizados debe ser menor que plazo_meses')
+  else if (pagos > Number(row.plazo_meses))
+    errs.push('pagos_realizados no puede exceder plazo_meses')
   return errs
 }
 

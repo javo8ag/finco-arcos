@@ -152,10 +152,16 @@ export default function Contratos() {
                       {c.numero_contrato}
                     </td>
                     <td className="px-4 py-3">
-                      {c._tipo === 'arrendamiento'
-                        ? <span className="badge-info">Arrend.</span>
-                        : <span className="badge-gray">Crédito</span>
-                      }
+                      {c._tipo === 'arrendamiento' ? (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="badge badge-info">Arrend.</span>
+                          {c.tipo_arrendamiento === 'puro' && (
+                            <span className="badge badge-gray text-xs">Puro</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="badge badge-gray">Crédito</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <p className="text-sm font-medium text-gray-900">{c.clientes?.razon_social}</p>

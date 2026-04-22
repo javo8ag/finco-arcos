@@ -4,6 +4,7 @@ import { ArrowLeft, CreditCard, TrendingUp, Calendar, CheckCircle, Clock, AlertC
 import { getContratoCreditoById, getTablaAmortizacion } from '../../lib/contratosApi'
 import { formatCurrency, formatDate, estatusColor } from '../../utils/format'
 import { calcularDiasAtraso } from '../../utils/amortizacion'
+import { calcularCAT } from '../../utils/cat'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 
@@ -50,6 +51,13 @@ export default function CreditoDetalle() {
   if (error)   return <div className="card text-red-500">{error}</div>
   if (!contrato) return null
 
+  const cat = tabla.length > 0
+    ? calcularCAT(
+        (contrato.monto_credito ?? 0) - (contrato.enganche ?? 0),
+        tabla.map(f => f.total_pago)
+      )
+    : null
+
   const pagados    = tabla.filter(f => f.estatus_pago === 'Pagado').length
   const atrasados  = tabla.filter(f => f.dias_atraso > 0 && f.estatus_pago === 'Pendiente').length
   const primerPendiente = tabla.find(f => f.estatus_pago !== 'Pagado')
@@ -77,7 +85,7 @@ export default function CreditoDetalle() {
       </PageHeader>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <KPI label="Saldo insoluto" value={formatCurrency(saldoInsoluto)} color="text-primary" />
         <KPI label="Monto del crédito" value={formatCurrency(contrato.monto_credito)} />
         <KPI label="Pagos realizados" value={`${pagados} / ${contrato.plazo_meses}`}
@@ -85,6 +93,8 @@ export default function CreditoDetalle() {
         <KPI label="Pagos en atraso" value={atrasados}
           color={atrasados > 0 ? 'text-red-600' : 'text-green-600'}
           sub={atrasados > 0 ? 'Requieren atención' : 'Al corriente'} />
+        <KPI label="CAT (anual)" value={cat != null ? `${cat.toFixed(1)}%` : '—'}
+          sub="Costo Anual Total" color="text-violet-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">

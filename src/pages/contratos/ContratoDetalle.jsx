@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Car, Calendar, TrendingUp, CheckCircle, Clock, AlertCircle, CreditCard } from 'lucide-react'
+import { ArrowLeft, Car, Calendar, TrendingUp, CheckCircle, Clock, AlertCircle, CreditCard, Info } from 'lucide-react'
 import { getContratoArrendamientoById, getTablaAmortizacion } from '../../lib/contratosApi'
 import { formatCurrency, formatDate, estatusColor } from '../../utils/format'
 import { calcularDiasAtraso as diasAtraso } from '../../utils/amortizacion'
+import { calcularCAT } from '../../utils/cat'
 import PageHeader from '../../components/ui/PageHeader'
 import Spinner from '../../components/ui/Spinner'
 
@@ -62,6 +63,33 @@ export default function ContratoDetalle() {
   const atrasados = tabla.filter(f => f.dias_atraso > 0 && f.estatus_pago === 'Pendiente').length
   const saldoInsoluto = tabla.find(f => f.estatus_pago !== 'Pagado')?.saldo_insoluto ?? 0
 
+  // CAT
+  const cat = tabla.length > 0
+    ? calcularCAT(
+        (contrato.valor_activo ?? 0) - (contrato.enganche ?? 0),
+        tabla.map(f => f.total_pago)
+      )
+    : null
+
+  // Depreciación (solo arrendamiento puro)
+  const deprecPanel = (() => {
+    if (contrato.tipo_arrendamiento !== 'puro') return null
+    const inicio = new Date(contrato.fecha_inicio + 'T12:00:00')
+    const mesesTranscurridos = Math.max(0,
+      (new Date().getFullYear() - inicio.getFullYear()) * 12 +
+      (new Date().getMonth() - inicio.getMonth())
+    )
+    const va = contrato.valor_activo ?? 0
+    const tasaFiscal    = 0.25  // SAT: vehículos 25% anual
+    const tasaContable  = 0.20  // 20% = vida útil 5 años
+    const depFiscalMes  = va * tasaFiscal / 12
+    const depContableMes = va * tasaContable / 12
+    const depFiscalAcum  = Math.min(va, depFiscalMes * mesesTranscurridos)
+    const depContableAcum = Math.min(va, depContableMes * mesesTranscurridos)
+    return { mesesTranscurridos, va, depFiscalAcum, depContableAcum, depFiscalMes, depContableMes,
+             valorNetoFiscal: va - depFiscalAcum, valorNetoContable: va - depContableAcum }
+  })()
+
   return (
     <div>
       <PageHeader
@@ -79,7 +107,7 @@ export default function ContratoDetalle() {
       </PageHeader>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <KPI label="Saldo insoluto" value={formatCurrency(saldoInsoluto)} color="text-primary" />
         <KPI label="Valor del activo" value={formatCurrency(contrato.valor_activo)} />
         <KPI label="Pagos realizados" value={`${pagados} / ${contrato.plazo_meses}`}
@@ -87,6 +115,8 @@ export default function ContratoDetalle() {
         <KPI label="Pagos en atraso" value={atrasados}
           color={atrasados > 0 ? 'text-red-600' : 'text-green-600'}
           sub={atrasados > 0 ? 'Requieren atención' : 'Al corriente'} />
+        <KPI label="CAT (anual)" value={cat != null ? `${cat.toFixed(1)}%` : '—'}
+          sub="Costo Anual Total" color="text-violet-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -139,9 +169,57 @@ export default function ContratoDetalle() {
               <span className="text-gray-500">Estatus</span>
               <span className={estatusColor(contrato.estatus)}>{contrato.estatus}</span>
             </div>
+            <div className="flex justify-between border-t pt-2 mt-1">
+              <span className="text-gray-500">Tipo arrendamiento</span>
+              <span className={`badge ${contrato.tipo_arrendamiento === 'puro' ? 'badge-info' : 'badge-gray'}`}>
+                {contrato.tipo_arrendamiento === 'puro' ? 'Puro' : 'Financiero'}
+              </span>
+            </div>
+            {contrato.tipo_renta === 'variable' && (
+              <div className="flex justify-between">
+                <span className="text-gray-500">Renta variable</span>
+                <span className="text-xs font-medium text-gray-700">
+                  {contrato.indice_ajuste} · {contrato.frecuencia_ajuste}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Panel de depreciación — solo arrendamiento puro */}
+      {deprecPanel && (
+        <div className="card mb-6 border-l-4 border-blue-400">
+          <div className="flex items-center gap-2 mb-3">
+            <Info size={16} className="text-blue-500" />
+            <h2 className="text-sm font-semibold text-gray-800">Depreciación del activo — Arrendamiento Puro</h2>
+            <span className="text-xs text-gray-400 ml-auto">{deprecPanel.mesesTranscurridos} meses transcurridos</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-400 mb-1">Deprec. fiscal acum. (25% SAT)</p>
+              <p className="font-bold text-red-600">{formatCurrency(deprecPanel.depFiscalAcum)}</p>
+              <p className="text-xs text-gray-400">{formatCurrency(deprecPanel.depFiscalMes)}/mes</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-400 mb-1">Valor neto fiscal</p>
+              <p className="font-bold text-gray-900">{formatCurrency(deprecPanel.valorNetoFiscal)}</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-400 mb-1">Deprec. contable acum. (20%)</p>
+              <p className="font-bold text-orange-600">{formatCurrency(deprecPanel.depContableAcum)}</p>
+              <p className="text-xs text-gray-400">{formatCurrency(deprecPanel.depContableMes)}/mes</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-gray-400 mb-1">Valor neto contable</p>
+              <p className="font-bold text-gray-900">{formatCurrency(deprecPanel.valorNetoContable)}</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 bg-blue-50 rounded-lg px-3 py-2">
+            <strong>Tratamiento fiscal:</strong> Finco Arcos deduce la depreciación del activo. El arrendatario deduce la renta mensual completa como gasto operativo (Art. 36 LISR).
+          </p>
+        </div>
+      )}
 
       {/* Tabla de amortización */}
       <div className="card p-0 overflow-hidden">

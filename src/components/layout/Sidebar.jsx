@@ -1,7 +1,7 @@
 import { NavLink, Link } from 'react-router-dom'
 import {
   LayoutDashboard, Users, FileText, CreditCard,
-  BarChart2, Settings, LogOut, AlertTriangle, ChevronDown, Layers, Upload, UserCircle,
+  BarChart2, Settings, LogOut, AlertTriangle, ChevronDown, Layers, Upload, UserCircle, Shield, BarChart3, MessageSquare, Landmark, Truck,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../../store/authStore'
@@ -15,6 +15,11 @@ const nav = [
   { to: '/pagos',         icon: CreditCard,      label: 'Cobranza' },
   { to: '/moratorios',    icon: AlertTriangle,   label: 'Moratorios' },
   { to: '/reportes',      icon: BarChart2,       label: 'Reportes' },
+  { to: '/clasificacion', icon: BarChart3,       label: 'IFRS 9' },
+  { to: '/atencion',      icon: MessageSquare,   label: 'Atención' },
+  { to: '/fondeo',         icon: Landmark,        label: 'Fondeo' },
+  { to: '/activos',        icon: Truck,           label: 'Activos' },
+  { to: '/pld',           icon: Shield,          label: 'PLD / FT' },
   { to: '/importacion',   icon: Upload,          label: 'Importación' },
   { to: '/configuracion', icon: Settings,        label: 'Configuración' },
 ]
