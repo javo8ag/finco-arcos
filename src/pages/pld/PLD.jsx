@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Shield, AlertTriangle, FileText, Users, Plus, CheckCircle, Clock, Eye, X } from 'lucide-react'
+import AcercaDeModal, { Seccion, Alerta, Tabla } from '../../components/ui/AcercaDeModal'
 import {
   getAlertas, crearAlerta, actualizarAlerta,
   getConsultasListas, registrarConsultaLista,
@@ -264,6 +265,37 @@ export default function PLD() {
   return (
     <div>
       <PageHeader titulo="PLD / FT" subtitulo="Prevención de Lavado de Dinero y Financiamiento al Terrorismo">
+        <AcercaDeModal titulo="PLD / FT — Prevención de Lavado de Dinero">
+          <Alerta tipo="info">Como SAPI (no SOFOM), no estás obligado a reportar directamente a la UIF ni a la CNBV, pero sí debes mantener un registro estructurado de operaciones inusuales y relevantes. Este módulo cumple esa función y protege a la empresa ante cualquier auditoría o litigio.</Alerta>
+          <Seccion titulo="Tipos de alertas">
+            <p><strong>OR — Operación Relevante:</strong> Se genera automáticamente cuando un cliente realiza un pago en efectivo mayor a $300,000 (persona física) o $500,000 (persona moral). No implica que haya algo ilegal — solo requiere que documentes el origen de los fondos.</p>
+            <p><strong>OI — Operación Inusual:</strong> Cuando una transacción no coincide con el perfil del cliente. Ejemplo: cliente con historial de pagos de $20,000 mensuales de repente deposita $800,000 en efectivo. Se registra manualmente al detectarse.</p>
+            <p><strong>OIP — Operación Interna Preocupante:</strong> Conducta sospechosa de un empleado (accesos a información sin justificación, modificaciones inusuales en contratos, etc.).</p>
+          </Seccion>
+          <Tabla
+            headers={['Tipo', 'Cuándo aplica', 'Quién la genera']}
+            rows={[
+              ['OR — PFAE', 'Pago en efectivo ≥ $300,000', 'Automática al registrar pago'],
+              ['OR — PM',   'Pago en efectivo ≥ $500,000', 'Automática al registrar pago'],
+              ['OI',        'Transacción fuera del perfil', 'Manual, por el operador'],
+              ['OIP',       'Conducta interna irregular',   'Manual, por el responsable PLD'],
+            ]}
+          />
+          <Seccion titulo="Listas negras — qué son y qué hacer si hay coincidencia">
+            <p><strong>OFAC</strong> (Oficina de Control de Activos Extranjeros de EE.UU.): Lista de personas, empresas y países bajo sanciones estadounidenses. Si un cliente aparece aquí, cualquier operación con él puede tener consecuencias legales internacionales.</p>
+            <p><strong>ONU</strong>: Lista del Consejo de Seguridad de Naciones Unidas. Aplica a terroristas y regímenes internacionales.</p>
+            <p><strong>SAT 69-B</strong>: Empresas facturadoras sin respaldo real (EFOS/EDOS). Si un cliente o proveedor está en esta lista, sus facturas no son fiscalmente válidas.</p>
+            <p><strong>CNBV</strong>: Entidades financieras operando de forma irregular o sancionadas en México.</p>
+          </Seccion>
+          <Alerta tipo="danger">Si encuentras una coincidencia real en cualquier lista: <strong>no realices ni completes ninguna operación</strong>, documenta la consulta con el resultado, y consulta con tu abogado o área legal antes de cualquier acción.</Alerta>
+          <Seccion titulo="KYC — Conoce a tu cliente (Know Your Customer)">
+            <p>Cada expediente de cliente debe tener registrado: su actividad económica principal, si es o tiene vínculos con una Persona Políticamente Expuesta (PEP — funcionarios, políticos y familiares directos), estructura corporativa si es persona moral, y su perfil transaccional habitual (monto promedio, frecuencia de pago, forma de pago).</p>
+            <p>Este perfil es el que el sistema usa para detectar operaciones inusuales. Si el perfil no está capturado, no puede haber una alerta OI automática.</p>
+          </Seccion>
+          <Seccion titulo="Expedientes vencidos">
+            <p>La regulación recomienda actualizar el expediente de cada cliente al menos una vez al año. La pestaña "Expedientes vencidos" muestra a todos los clientes cuyo campo Fecha de actualización tiene más de 12 meses. Debes contactarlos para confirmar que su información sigue vigente (RFC, domicilio, actividad, fuente de recursos) antes de aprobar nuevas operaciones.</p>
+          </Seccion>
+        </AcercaDeModal>
         <button onClick={() => setModal('nueva')} className="btn-primary flex items-center gap-2">
           <Plus size={16} /> Nueva alerta
         </button>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Package, Plus, Search, Car, Wrench, Monitor, Building2, Box, Edit2, TrendingDown, ChevronDown, ChevronUp, X } from 'lucide-react'
+import AcercaDeModal, { Seccion, Alerta, Tabla } from '../../components/ui/AcercaDeModal'
 import { getActivos, crearActivo, actualizarActivo, calcularDepreciacion, getStatsActivos } from '../../lib/activosApi'
 import { useAuthStore } from '../../store/authStore'
 import { usePortafolioStore } from '../../store/portafolioStore'
@@ -332,9 +333,46 @@ export default function Activos() {
           <h1 className="text-2xl font-bold text-gray-900">Activos Propios</h1>
           <p className="text-sm text-gray-500 mt-0.5">Inventario de bienes de la empresa con depreciación fiscal y contable</p>
         </div>
-        <button onClick={() => setModal({})} className="btn-primary flex items-center gap-2">
-          <Plus size={16} /> Registrar activo
-        </button>
+        <div className="flex items-center gap-2">
+          <AcercaDeModal titulo="Activos Propios — Inventario y Depreciación">
+            <Seccion titulo="¿Qué va aquí y qué no?">
+              <p>Registra aquí únicamente los bienes que son <strong>propiedad de Finco o Monarca</strong> y que se entregan en arrendamiento a clientes. Esto aplica exclusivamente al <strong>arrendamiento puro</strong>: la empresa compra el bien, lo pone a nombre propio, y lo renta.</p>
+              <p>En el arrendamiento financiero, el bien nunca entra al balance de Finco — el cliente lo adquiere con el crédito. Esos activos no van en este módulo.</p>
+            </Seccion>
+            <Seccion titulo="Tasas de depreciación por tipo de bien (SAT)">
+              <p>El SAT establece tasas máximas de deducción fiscal anual. La depreciación contable puede ser diferente (normalmente menor o igual).</p>
+            </Seccion>
+            <Tabla
+              headers={['Tipo de bien', 'Tasa fiscal SAT', 'Vida útil fiscal', 'Tasa contable sugerida']}
+              rows={[
+                ['Vehículos (automóviles)',  '25%', '4 años',  '20% (5 años)'],
+                ['Equipo de cómputo',        '30%', '3.3 años','25% (4 años)'],
+                ['Maquinaria y equipo',      '10%', '10 años', '10% (10 años)'],
+                ['Inmuebles (construcción)', '5%',  '20 años', '5% (20 años)'],
+                ['Otro equipo industrial',   '10%', '10 años', '10%'],
+              ]}
+            />
+            <Seccion titulo="Valor en libros fiscal vs. contable — ¿cuál usar para qué?">
+              <p><strong>Valor en libros fiscal:</strong> Es el valor que el SAT reconoce para efectos de deducción. Lo usas cuando calculas el ISR o cuando vendes el activo (la ganancia fiscal es precio de venta menos valor fiscal).</p>
+              <p><strong>Valor en libros contable:</strong> Es el valor que aparece en tu balance bajo IFRS/NIF. Se basa en la vida útil estimada del bien. Tu contador lo usa para presentar los estados financieros.</p>
+              <p>Pueden diferir: un vehículo comprado en 2022 puede estar totalmente depreciado fiscalmente (4 años al 25%) pero aún tener valor contable si la empresa usa 5 años.</p>
+            </Seccion>
+            <Seccion titulo="Cómo registrar un activo paso a paso">
+              <p>1. Selecciona el tipo de bien — el sistema precarga la tasa fiscal SAT correspondiente.</p>
+              <p>2. Llena descripción, marca, modelo, año, NIV/número de serie y placas si aplica.</p>
+              <p>3. Captura el costo de adquisición (precio factura + IVA si no es acreditable) y la fecha de compra exacta.</p>
+              <p>4. Ajusta las tasas si tu contador indica tasas distintas a las precargadas.</p>
+              <p>5. El estatus inicial es "Disponible". Cámbialo a "En arrendamiento" cuando lo vincules a un contrato, "En recuperación" cuando esté en proceso de recuperación judicial, y "Dado de baja" cuando lo vendas o destruyas.</p>
+            </Seccion>
+            <Seccion titulo="Activo totalmente depreciado">
+              <p>Cuando la depreciación acumulada iguala al costo de adquisición, el activo tiene valor en libros de $0. Fiscalmente ya no genera deducción, pero el bien puede seguir en operación. En ese caso el sistema lo marca con una advertencia naranja. No es obligatorio darlo de baja — solo significa que ya no genera beneficio fiscal adicional.</p>
+            </Seccion>
+            <Alerta tipo="success">Vincula cada activo al contrato de arrendamiento puro correspondiente desde el formulario del contrato (campo "Activo vinculado"). Esto te permite rastrear qué bien está con qué cliente y qué pasa si necesitas recuperarlo.</Alerta>
+          </AcercaDeModal>
+          <button onClick={() => setModal({})} className="btn-primary flex items-center gap-2">
+            <Plus size={16} /> Registrar activo
+          </button>
+        </div>
       </div>
 
       {/* KPIs */}

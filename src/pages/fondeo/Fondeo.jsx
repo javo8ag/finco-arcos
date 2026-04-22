@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { Landmark, Plus, AlertTriangle, TrendingUp, X, ChevronDown, ChevronRight } from 'lucide-react'
+import AcercaDeModal, { Seccion, Alerta, Tabla } from '../../components/ui/AcercaDeModal'
 import {
   getFondeos, crearFondeo, actualizarFondeo,
   getTablaFondeo, marcarPagoFondeo, getDashboardFondeo,
@@ -292,6 +293,40 @@ export default function Fondeo() {
   return (
     <div>
       <PageHeader titulo="Fondeo" subtitulo="Gestión de líneas de crédito y cartera pasiva de Finco Arcos">
+        <AcercaDeModal titulo="Fondeo — Gestión de Cartera Pasiva">
+          <Seccion titulo="¿Qué es el fondeo?">
+            <p>El fondeo es el dinero que Finco o Monarca pidieron prestado para poder otorgar créditos y arrendamientos a sus clientes. Es la "materia prima" del negocio. Aquí registras cada fuente de capital: lo que le debes a inversionistas, socios, familia, fondos o instituciones.</p>
+            <p>La lógica financiera es: recibes dinero a una tasa X (el fondeo), y lo colocas a tus clientes a una tasa mayor Y. El diferencial Y − X es tu margen de intermediación.</p>
+          </Seccion>
+          <Seccion titulo="Tipos de fondeadores">
+            <p><strong>Institucional:</strong> Banca de desarrollo (FIRA, NAFINSA, FND) o banca comercial. Generalmente tasas bajas, muchos requisitos, montos altos.</p>
+            <p><strong>Friends &amp; Family:</strong> Socios, familia o conocidos que invierten en la empresa. Tasas negociadas directamente.</p>
+            <p><strong>Capital propio:</strong> Recursos propios de los accionistas aportados como deuda subordinada o préstamo de accionistas.</p>
+            <p><strong>Fondo de inversión:</strong> Fondos privados o family offices que colocan capital a cambio de una tasa o participación.</p>
+          </Seccion>
+          <Seccion titulo="Métodos de amortización — ¿cuál elegir?">
+            <p><strong>Francés (cuota fija):</strong> Pagas la misma cantidad cada mes. Al inicio pagas más interés que capital; al final más capital que interés. Es el más común en créditos bancarios.</p>
+            <p><strong>Alemán (capital fijo):</strong> El capital que pagas cada mes es siempre el mismo, pero el interés va bajando porque el saldo disminuye linealmente. El primer pago es el más alto y el último el más bajo.</p>
+            <p><strong>Bullet (solo intereses):</strong> Durante todo el plazo solo pagas intereses. Al vencimiento pagas todo el capital de golpe. Muy común en fondos de inversión y créditos puente. Requiere tener o refinanciar el capital al vencimiento.</p>
+          </Seccion>
+          <Tabla
+            headers={['Método', 'Pago mensual', 'Cuándo usarlo']}
+            rows={[
+              ['Francés', 'Fijo siempre', 'Créditos bancarios, flujo predecible'],
+              ['Alemán',  'Decrece con el tiempo', 'Cuando quieres liquidar capital rápido'],
+              ['Bullet',  'Solo intereses + capital al final', 'Fondos de inversión, créditos puente'],
+            ]}
+          />
+          <Seccion titulo="Ratio de apalancamiento — ¿qué es sano?">
+            <p>El apalancamiento = Cartera colocada ÷ Fondeo total. Te dice cuántos pesos de crédito tienes por cada peso de fondeo.</p>
+            <p>Un ratio de <strong>1x</strong> significa que tienes exactamente lo que debes. Por encima de <strong>3x-5x</strong> es señal de que estás colocando con capital propio o que tu cartera creció más rápido que tu fondeo — revisa si necesitas levantar más capital.</p>
+            <p>Si el ratio es menor a 1x, significa que tienes fondeo sin colocar — estás pagando intereses sobre dinero que no está trabajando.</p>
+          </Seccion>
+          <Seccion titulo="Próximos vencimientos — riesgo de refinanciamiento">
+            <p>Si tienes un fondeo bullet o de plazo corto que vence pronto, necesitas tener claro si lo vas a renovar, pagar o sustituir con otra fuente. El tablero te muestra fondeos que vencen en los próximos 60 días para que puedas anticiparte. No tener fondeo para pagar es uno de los riesgos más críticos en el negocio.</p>
+          </Seccion>
+          <Alerta tipo="warning">Registra cada fondeo con el método correcto antes de que se genere la primera tabla de amortización. Si el fondeador te pide un calendario específico que no coincide exactamente con los tres métodos, usa el que más se acerque y ajusta manualmente los pagos reales en la tabla.</Alerta>
+        </AcercaDeModal>
         <button onClick={() => setModal('nuevo')} className="btn-primary flex items-center gap-2">
           <Plus size={16} /> Nuevo fondeo
         </button>

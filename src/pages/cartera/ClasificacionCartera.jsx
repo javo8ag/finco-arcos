@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { Layers, Download, Info } from 'lucide-react'
+import AcercaDeModal, { Seccion, Alerta, Tabla } from '../../components/ui/AcercaDeModal'
 import { getClasificacionCartera, ETAPAS, TASAS_RESERVA } from '../../lib/ifrs9Api'
 import { usePortafolioStore } from '../../store/portafolioStore'
 import { formatCurrency } from '../../utils/format'
@@ -65,6 +66,34 @@ export default function ClasificacionCartera() {
   return (
     <div>
       <PageHeader titulo="Clasificación de Cartera" subtitulo="IFRS 9 simplificado — Etapas de deterioro y reservas preventivas">
+        <AcercaDeModal titulo="IFRS 9 — Clasificación de Cartera y Reservas">
+          <Alerta tipo="info">IFRS 9 (también llamada NIIF 9) es la norma contable internacional que obliga a las empresas financieras a reconocer pérdidas crediticias de forma anticipada, no solo cuando ya ocurrieron. Aunque como SAPI no estás regulado por CNBV, tu contador o auditor externo probablemente la aplique para los estados financieros.</Alerta>
+          <Seccion titulo="Las 3 etapas de clasificación">
+            <p>El sistema clasifica cada contrato automáticamente en función de los días de atraso en su tabla de amortización:</p>
+          </Seccion>
+          <Tabla
+            headers={['Etapa', 'Condición', 'Reserva requerida', 'Qué significa']}
+            rows={[
+              ['Etapa 1', 'Al corriente (0 días)',    '2% del saldo', 'Riesgo normal, pérdida esperada 12 meses'],
+              ['Etapa 2', '1 a 89 días de atraso',    '10% del saldo', 'Deterioro significativo, riesgo elevado'],
+              ['Etapa 3', '90 días o más de atraso',  '75% del saldo', 'Crédito deteriorado, pérdida probable'],
+            ]}
+          />
+          <Seccion titulo="Cómo informar a contabilidad">
+            <p>Al cierre contable mensual (o cuando el auditor lo solicite), exporta el CSV con el botón "Exportar CSV" y entrega ese archivo a tu contador. El archivo contiene: número de contrato, cliente, saldo insoluto, días de atraso, etapa asignada y monto de reserva sugerido por contrato.</p>
+            <p>El asiento contable que debe hacer tu contador por cada contrato en Etapa 2 o 3 es:</p>
+            <p className="font-mono text-xs bg-gray-50 rounded-lg px-3 py-2 mt-1">Cargo: Estimación preventiva para riesgos crediticios (gasto)<br/>Abono: Reserva preventiva para riesgos crediticios (pasivo)</p>
+          </Seccion>
+          <Seccion titulo="Efectos en los estados financieros">
+            <p><strong>Estado de resultados:</strong> La reserva es un gasto que reduce la utilidad del período. Un contrato en Etapa 3 con saldo de $500,000 genera un gasto de $375,000 en el periodo en que se clasifica.</p>
+            <p><strong>Balance general:</strong> La cartera se muestra neta de reservas. Si tienes $5M en cartera y $500K de reservas, el balance mostrará $4.5M como cartera neta.</p>
+            <p><strong>Reversión:</strong> Si un cliente que estaba en Etapa 2 o 3 se pone al corriente, la reserva se revierte y genera un ingreso en resultados. El sistema lo reflejará automáticamente en la siguiente clasificación.</p>
+          </Seccion>
+          <Seccion titulo="¿Con qué frecuencia hacerlo?">
+            <p>Lo ideal es mensual para detectar deterioro temprano. Como mínimo, hazlo cada trimestre y siempre al cierre anual. El botón "Exportar CSV" genera el reporte con la fecha del día, listo para adjuntarlo al expediente contable.</p>
+          </Seccion>
+          <Alerta tipo="warning">Las tasas de reserva (2%, 10%, 75%) son una aproximación simplificada. Un auditor externo bajo NIF o IFRS completo puede utilizar modelos de pérdida esperada más complejos (PD × LGD × EAD). Consulta con tu contador si necesitas mayor precisión para estados dictaminados.</Alerta>
+        </AcercaDeModal>
         <button onClick={() => exportCSV(clasificados)} className="btn-secondary flex items-center gap-2">
           <Download size={16} /> Exportar CSV
         </button>

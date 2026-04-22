@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { MessageSquare, Plus, AlertTriangle, CheckCircle, Clock, Download, X } from 'lucide-react'
+import AcercaDeModal, { Seccion, Alerta, Tabla } from '../../components/ui/AcercaDeModal'
 import { getQuejas, crearQueja, actualizarQueja, getStatsQuejas, exportarREUNE } from '../../lib/sacgApi'
 import { useAuthStore } from '../../store/authStore'
 import { formatDate } from '../../utils/format'
@@ -208,6 +209,37 @@ export default function AtencionClientes() {
   return (
     <div>
       <PageHeader titulo="Atención a Clientes" subtitulo="SACG — Registro de quejas, aclaraciones y consultas">
+        <AcercaDeModal titulo="Atención a Clientes — SACG y REUNE">
+          <Alerta tipo="info">Como SAPI, no tienes obligación legal de registrarte ante CONDUSEF ni de reportarle tus quejas. Sin embargo, mantener este registro es una buena práctica: documenta que atendiste cada caso en tiempo y forma, lo que protege a la empresa ante demandas civiles o arbitrajes.</Alerta>
+          <Seccion titulo="Tipos de registro">
+            <p><strong>Queja:</strong> El cliente está insatisfecho con el servicio, el trato, o considera que la empresa actuó incorrectamente. Ejemplo: "me descontaron de más este mes".</p>
+            <p><strong>Aclaración:</strong> El cliente cree que hay un error en sus datos, cobros o contrato. Ejemplo: "mi saldo no cuadra con lo que me dijeron".</p>
+            <p><strong>Consulta:</strong> El cliente solicita información sobre su contrato, saldo, tasa, etc. No implica inconformidad.</p>
+            <p><strong>Reclamación:</strong> El cliente exige formalmente una devolución, compensación o corrección. Es el nivel más serio y generalmente precede a una demanda si no se resuelve.</p>
+          </Seccion>
+          <Tabla
+            headers={['Estatus', 'Significado', 'Acción requerida']}
+            rows={[
+              ['Recibida',    'Registrada, aún sin asignar',         'Asignar responsable y comenzar investigación'],
+              ['En proceso',  'Se está investigando o tramitando',   'Documentar avances, comunicar al cliente'],
+              ['Resuelta',    'Se dio respuesta formal al cliente',  'Registrar la resolución y archivar'],
+              ['Improcedente','No aplica o es infundada',            'Explicar por escrito al cliente la razón'],
+            ]}
+          />
+          <Seccion titulo="Plazo de respuesta — 45 días naturales">
+            <p>La buena práctica del sector (y el estándar CONDUSEF para entidades reguladas) es resolver en 30 días hábiles, equivalentes a aproximadamente 45 días naturales. El sistema calcula este plazo automáticamente desde la fecha de recepción y colorea el registro:</p>
+            <p>🟡 <strong>Amarillo:</strong> más de 30 días naturales sin resolver — actúa pronto.<br/>🔴 <strong>Rojo:</strong> más de 45 días — plazo vencido, riesgo legal.</p>
+          </Seccion>
+          <Seccion titulo="Cómo atender una queja correctamente">
+            <p>1. Registra el caso inmediatamente en este módulo con todos los datos del cliente y descripción precisa.</p>
+            <p>2. Investiga: revisa la tabla de amortización, los pagos registrados y los movimientos del contrato.</p>
+            <p>3. Responde al cliente por escrito (correo o documento firmado), incluso si la respuesta es que no procede.</p>
+            <p>4. Regresa al sistema y marca el caso como "Resuelto" o "Improcedente", registrando la resolución. Esto crea el rastro documental.</p>
+          </Seccion>
+          <Seccion titulo="Exportar REUNE">
+            <p>REUNE es el formato de padrón de clientes que utiliza CONDUSEF para identificar a los usuarios de entidades financieras. Aunque como SAPI no lo entregas a CONDUSEF, exportarlo te da un archivo CSV con todos tus clientes, su RFC, domicilio y contratos activos — útil para auditorías internas, due diligence o reportes a socios/inversores.</p>
+          </Seccion>
+        </AcercaDeModal>
         <button onClick={handleExportarREUNE} className="btn-secondary flex items-center gap-2" disabled={exportando}>
           <Download size={16} /> {exportando ? 'Generando...' : 'Exportar REUNE'}
         </button>
