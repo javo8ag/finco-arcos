@@ -50,6 +50,10 @@ const toCsv = (cols, rows) =>
 export const plantillaArrendamiento = () => toCsv(COLS_ARR, EJEMPLO_ARR)
 export const plantillaCredito = () => toCsv(COLS_CRD, EJEMPLO_CRD)
 
+// ── Normalización de fecha — acepta YYYY-MM-DD y YYYY/MM/DD ───
+const normalizarFecha = (v) => v?.trim().replace(/\//g, '-') ?? ''
+const esFechaValida  = (v) => /^\d{4}-\d{2}-\d{2}$/.test(normalizarFecha(v))
+
 // ── Validación por fila ────────────────────────────────────────
 
 export const validarArrendamiento = (row) => {
@@ -60,8 +64,8 @@ export const validarArrendamiento = (row) => {
     errs.push('RFC inválido (mín 12 caracteres)')
   if (!['PFAE', 'PM'].includes(row.tipo_persona?.trim()))
     errs.push("tipo_persona debe ser 'PFAE' o 'PM'")
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(row.fecha_inicio?.trim()))
-    errs.push('fecha_inicio debe ser YYYY-MM-DD')
+  if (!esFechaValida(row.fecha_inicio))
+    errs.push('fecha_inicio debe ser YYYY-MM-DD o YYYY/MM/DD')
   if (isNaN(Number(row.valor_activo)) || Number(row.valor_activo) <= 0)
     errs.push('valor_activo debe ser número positivo')
   if (isNaN(Number(row.plazo_meses)) || Number(row.plazo_meses) <= 0)
@@ -88,8 +92,8 @@ export const validarCredito = (row) => {
     errs.push('RFC inválido (mín 12 caracteres)')
   if (!['PFAE', 'PM'].includes(row.tipo_persona?.trim()))
     errs.push("tipo_persona debe ser 'PFAE' o 'PM'")
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(row.fecha_inicio?.trim()))
-    errs.push('fecha_inicio debe ser YYYY-MM-DD')
+  if (!esFechaValida(row.fecha_inicio))
+    errs.push('fecha_inicio debe ser YYYY-MM-DD o YYYY/MM/DD')
   if (isNaN(Number(row.monto_credito)) || Number(row.monto_credito) <= 0)
     errs.push('monto_credito debe ser número positivo')
   if (isNaN(Number(row.plazo_meses)) || Number(row.plazo_meses) <= 0)
@@ -195,8 +199,8 @@ export async function importarFilaArrendamiento(row, userId) {
     seguro_mensual:   Number(row.seguro_mensual)   || 0,
     gastos_admin:     Number(row.gastos_admin)     || 0,
     cargo_seguridad:  Number(row.cargo_seguridad)  || 0,
-    fecha_inicio:     row.fecha_inicio.trim(),
-    fecha_vencimiento: calcularFechaVencimiento(row.fecha_inicio, plazo),
+    fecha_inicio:     normalizarFecha(row.fecha_inicio),
+    fecha_vencimiento: calcularFechaVencimiento(normalizarFecha(row.fecha_inicio), plazo),
     renta_mensual:    calcularRentaMensual(va, eng, vr, plazo, tasa),
   }
 
@@ -224,8 +228,8 @@ export async function importarFilaCredito(row, userId) {
     tasa_moratoria:      Number(row.tasa_moratoria) || 0,
     dias_gracia:         Number(row.dias_gracia)    || 0,
     metodo_amortizacion: row.metodo_amortizacion?.trim() || 'frances',
-    fecha_inicio:        row.fecha_inicio.trim(),
-    fecha_vencimiento:   calcularFechaVencimiento(row.fecha_inicio, plazo),
+    fecha_inicio:        normalizarFecha(row.fecha_inicio),
+    fecha_vencimiento:   calcularFechaVencimiento(normalizarFecha(row.fecha_inicio), plazo),
   }
 
   const result = await createContratoCredito(contrato, userId)
